@@ -4,7 +4,6 @@
 
 ## 📄 Design & Project Documentation
 
-To avoid duplicating narrative specifications, storyboards, and asset checklists in this repository, all detailed design modules and technical breakdowns are maintained in Google Docs:
 
 * 📗 [**Tema 5: Main Modules & Technical Design**](https://docs.google.com/document/d/1DOPDS3eZHqFy5UXhNWhShu2oXauYvMbrf8QbMBnkx5s/edit?usp=sharing) — *Complete User Story Map, UX Journey Map, First-Person POV Storyboards, and the Asset Creation Checklist.*
 
