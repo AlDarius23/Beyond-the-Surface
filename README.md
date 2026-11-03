@@ -76,6 +76,6 @@ BeyondTheSurface-VR/
 
 ## Ciobanu Robert Andrei
 ## Vultur Stefana-Ghoerghita
-## <Alupoaie Darius
+## Alupoaie Darius
 
 
