@@ -74,8 +74,8 @@ BeyondTheSurface-VR/
 
 ## 👥 Team & Contributors
 
-* **<Numele Tău>** — *Role / Module*
-* **<Coleg 1>** — *Role / Module*
-* **<Coleg 2>** — *Role / Module*
+* **<Ciobanu Robert Andrei>** 
+* **<Vultur Stefana-Ghoerghita>** 
+* **<Alupoaie Darius>** 
 
-*Developed for the **Introduction to Mixed Realities** course.*
+
