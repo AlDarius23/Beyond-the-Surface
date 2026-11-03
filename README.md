@@ -74,8 +74,8 @@ BeyondTheSurface-VR/
 
 ## 👥 Team & Contributors
 
-* **<Ciobanu Robert Andrei>** 
-* **<Vultur Stefana-Ghoerghita>** 
-* **<Alupoaie Darius>** 
+## Ciobanu Robert Andrei
+## Vultur Stefana-Ghoerghita
+## <Alupoaie Darius
 
 
