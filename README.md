@@ -4,9 +4,9 @@
 
 ## 📄 Design & Project Documentation
 
-To avoid duplicating narrative specifications, storyboards, and asset checklists in this repository, all detailed design modules and technical breakdowns are maintained in Google Docs:
 
 * 📗 [**Tema 5: Main Modules & Technical Design**](https://docs.google.com/document/d/1DOPDS3eZHqFy5UXhNWhShu2oXauYvMbrf8QbMBnkx5s/edit?usp=sharing) — *Complete User Story Map, UX Journey Map, First-Person POV Storyboards, and the Asset Creation Checklist.*
+* 📗 [**Tema 4: State Of The Art**](https://docs.google.com/document/d/1NcCcHdEzj2fmgrUnqXHThL8SBQ40FV3yRfWON4wjRgM/edit?usp=sharing)
 
 ## ⚙️ Technical Architecture
 
@@ -75,8 +75,8 @@ BeyondTheSurface-VR/
 
 ## 👥 Team & Contributors
 
-* **<Numele Tău>** — *Role / Module*
-* **<Coleg 1>** — *Role / Module*
-* **<Coleg 2>** — *Role / Module*
+## Ciobanu Robert Andrei
+## Vultur Stefana-Ghoerghita
+## Alupoaie Darius
 
-*Developed for the **Introduction to Mixed Realities** course.*
+
