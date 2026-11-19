@@ -25,6 +25,10 @@ namespace BeyondTheSurface
         [Tooltip("Ambulance appears when the player is this close to the crossing, or at this remaining time")]
         public float triggerDistance = 7f;
         public float triggerRemaining = 15f;
+        [Tooltip("Seconds after the intro text appears that the ambulance sets off (siren heard far away)")]
+        public float ambulanceLeadIn = 2.6f;
+        [Tooltip("Seconds of walking after the countdown starts before the two cars crash")]
+        public float crashAfterSeconds = 3.5f;
 
         [Header("Debug")]
         public bool autoStart = true;
@@ -43,7 +47,12 @@ namespace BeyondTheSurface
         GameObject hudPanel;
         bool shifted;
         InputAction replayAction;
-        GameObject hospitalLights;
+        CityAtmosphere city;
+        CityLife life;
+        SoundDirector sound;
+        HospitalMood hospital;
+        VRWalkLocomotion walker;
+        TrafficSystem traffic;
 
         void Awake()
         {
@@ -52,6 +61,11 @@ namespace BeyondTheSurface
             ambulance = GetComponent<AmbulanceEvent>() ?? gameObject.AddComponent<AmbulanceEvent>();
             ambulance.crosswalkZ = crosswalkZ;
             ekg = GetComponent<EKGMonitor>() ?? gameObject.AddComponent<EKGMonitor>();
+            city = GetComponent<CityAtmosphere>(); if (city == null) city = gameObject.AddComponent<CityAtmosphere>();
+            life = GetComponent<CityLife>(); if (life == null) life = gameObject.AddComponent<CityLife>();
+            sound = GetComponent<SoundDirector>(); if (sound == null) sound = gameObject.AddComponent<SoundDirector>();
+            hospital = GetComponent<HospitalMood>(); if (hospital == null) hospital = gameObject.AddComponent<HospitalMood>();
+            traffic = GetComponent<TrafficSystem>(); if (traffic == null) traffic = gameObject.AddComponent<TrafficSystem>();
         }
 
         void Start()
@@ -127,18 +141,9 @@ namespace BeyondTheSurface
 
         void BuildHospitalLights()
         {
-            hospitalLights = new GameObject("HospitalLights");
-            int i = 0;
-            foreach (var r in FindObjectsByType<Renderer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-            {
-                if (!r.name.StartsWith("Hospital_CeilingLight")) continue;
-                var g = new GameObject("HospitalLight_" + (++i));
-                g.transform.SetParent(hospitalLights.transform, false);
-                g.transform.position = r.bounds.center + Vector3.down * 0.15f;
-                var l = g.AddComponent<Light>();
-                l.type = LightType.Point; l.range = 7f; l.intensity = 6f; l.color = new Color(1f, 0.97f, 0.9f);
-            }
-            hospitalLights.SetActive(false);
+            walker = rig.GetComponent<VRWalkLocomotion>();
+            if (walker == null) walker = rig.gameObject.AddComponent<VRWalkLocomotion>();
+            hospital.Build();
         }
 
         void PlaceRig(Vector3 floorPos, float yaw)
@@ -178,17 +183,23 @@ namespace BeyondTheSurface
         // ---------------------------------------------------------------- street flow
         IEnumerator StreetFlow()
         {
+            if (walker != null) walker.movementLocked = true; // read the briefing first
             yield return new WaitForSeconds(1.0f);
             ShowHud("BEYOND THE SURFACE\n\nAi o intalnire importanta pe partea cealalta a strazii.\nTrebuie sa ajungi la timp!", 4.5f, 1.4f, 0.5f);
-            yield return new WaitForSeconds(4.8f);
+            // the ambulance is already on its way: its siren rises at the end of the briefing
+            yield return new WaitForSeconds(ambulanceLeadIn);
+            ambulance.Trigger();
+            StartCoroutine(PedestrianLightIrony());
+            yield return new WaitForSeconds(Mathf.Max(0.1f, 4.8f - ambulanceLeadIn));
             watch.StartCountdown(timeLimit);
+            if (walker != null) walker.movementLocked = false;
             replayAction.Enable();
+            // a few seconds of walking, then two cars crash ahead and lock the street; the ambulance arrives into it
+            if (traffic != null) StartCoroutine(StageCrashAfter(crashAfterSeconds - traffic.crashLeadTime));
 
             while (!shifted)
             {
-                float zDist = Mathf.Abs(cam.transform.position.z - crosswalkZ);
-                if (!ambulance.Triggered && (zDist < triggerDistance || watch.Remaining < triggerRemaining))
-                    ambulance.Trigger();
+                if (!ambulance.Triggered) ambulance.Trigger();
 
                 // stress vignette rises as time runs out
                 if (vignette != null)
@@ -199,6 +210,21 @@ namespace BeyondTheSurface
                 yield return null;
             }
         }
+
+        IEnumerator StageCrashAfter(float delay)
+        {
+            yield return new WaitForSeconds(Mathf.Max(0f, delay));
+            if (!shifted) traffic.StageCrash();
+        }
+
+        // the walk signal finally turns green... while the crossing is blocked by the stuck ambulance
+        IEnumerator PedestrianLightIrony()
+        {
+            while (!ambulance.Parked && !shifted) yield return null;
+            yield return new WaitForSeconds(6f);
+            if (traffic != null && !shifted) traffic.pedestrianGreen = true;
+        }
+
 
         void OnTimerExpired()
         {
@@ -218,6 +244,8 @@ namespace BeyondTheSurface
 
             // fade out while the siren sags
             ambulance.StopSiren(1.3f);
+            if (walker != null) walker.movementLocked = true;
+            if (sound != null) sound.EnterHospital(1.3f);
             float t = 0f;
             while (t < 1.3f) { t += Time.deltaTime; SetFade(t / 1.3f); yield return null; }
             SetFade(1f);
@@ -227,13 +255,15 @@ namespace BeyondTheSurface
             var spawn = WristWatch.FindByName("Hospital_PlayerSpawn");
             Vector3 spawnPos = spawn != null ? spawn.position : new Vector3(200f, 0f, 2.4f);
             PlaceRig(spawnPos, 180f);
-            hospitalLights.SetActive(true);
-            if (vignette != null) vignette.intensity.value = 0f;
-            RenderSettings.ambientLight = Color.Lerp(RenderSettings.ambientLight, new Color(0.35f, 0.38f, 0.4f), 0.5f);
+            if (city != null) city.Leave();
+            if (life != null) life.Leave();
+            if (traffic != null) traffic.Leave();
+            ekg.Begin();
+            if (hospital != null) hospital.Enter();
+            if (vignette != null) { vignette.color.value = Color.black; vignette.intensity.value = 0.38f; }
             yield return new WaitForSeconds(0.6f);
 
             // fade in with the EKG already beeping; chromatic aberration pulse = shock
-            ekg.Begin();
             t = 0f;
             while (t < 1.8f)
             {
@@ -243,9 +273,11 @@ namespace BeyondTheSurface
                 yield return null;
             }
             SetFade(0f);
+            if (walker != null) walker.movementLocked = false;
 
             yield return new WaitForSeconds(2.0f);
             BuildChartText();
+            if (sound != null) sound.HospitalTheme();
             yield return new WaitForSeconds(3.0f);
             BuildMotherText();
             yield return new WaitForSeconds(7.0f);
